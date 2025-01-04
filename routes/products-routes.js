@@ -4,7 +4,7 @@ const router = express.Router();
 
 const pool = require("../utilities/db");
 
-router.get("/products", async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const [products] = await pool.query("select * from products");
     return res
@@ -15,7 +15,7 @@ router.get("/products", async (req, res) => {
   }
 });
 
-router.get("/products/:id", async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const id = req.params.id;
     const [product] = await pool.query("select * from products where id=?", [
@@ -28,14 +28,12 @@ router.get("/products/:id", async (req, res) => {
     return res
       .status(200)
       .json({ message: "successfully products fetched", data: theProduct });
-  } catch (e) {
-    console.log(e);
-
+  } catch {
     return res.status(500).json({ message: "an error occured" });
   }
 });
 
-router.post("/products", async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const payload = req.body;
     const [productFound] = await pool.query(
@@ -62,7 +60,7 @@ router.post("/products", async (req, res) => {
   }
 });
 
-router.patch("/products/:id", async (req, res) => {
+router.patch("/:id", async (req, res) => {
   try {
     const id = req.params.id;
     const [product] = await pool.query("select * from products where id=?", [
@@ -86,7 +84,7 @@ router.patch("/products/:id", async (req, res) => {
   }
 });
 
-router.delete("/products/:id", async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
     const id = req.params.id;
     const [product] = await pool.query("select * from products where id=?", [

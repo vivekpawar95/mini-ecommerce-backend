@@ -1,25 +1,32 @@
 const express = require("express");
 const pool = require("../utilities/db");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const fs = require("fs");
 
 const router = express.Router();
+require("dotenv").config();
 
-router.get("/users", async (req, res) => {
-  try {
-    const [users] = await pool.query("select * from users");
+router.get(
+  "/", //users/
 
-    return res.status(200).json({
-      data: users,
-      message: "successfully users are fetched",
-    });
-  } catch (e) {
-    console.log(e);
+  async (req, res) => {
+    try {
+      const [users] = await pool.query("select * from users");
 
-    return res.status(500).send("an error has occured!");
+      return res.status(200).json({
+        data: users,
+        message: "successfully users are fetched",
+      });
+    } catch {
+      return res.status(500).send("an error has occured!");
+    }
   }
-});
+);
 
-router.get("/users/:email", async (req, res) => {
+router.get("/:email", async (req, res) => {
   try {
+    //users/:email
     const email = req.params.email;
     const [userResp] = await pool.query("select * from users where email=?", [
       email,
@@ -39,23 +46,23 @@ router.get("/users/:email", async (req, res) => {
   }
 });
 
-router.post("/users", async (req, res) => {
+router.post("/", async (req, res) => {
   const payload = req.body;
   try {
     const [findUser] = await pool.query("select * from users where email=?", [
       payload.email,
     ]);
-    console.log("*finduser:", findUser);
 
     if (findUser.length > 0) {
       return res.status(400).json({
         message: "user is already there please try with different email",
       });
     }
+    const hashedPassword = await bcrypt.hash(payload.password, 10);
 
     const [createReposne] = await pool.query(
       "insert into users(name,email,password) values (?,?,?)",
-      [payload.name, payload.email, payload.password]
+      [payload.name, payload.email, hashedPassword]
     );
     if (createReposne.affectedRows == 1) {
       return res.status(200).json({
@@ -66,14 +73,12 @@ router.post("/users", async (req, res) => {
         message: "request was succefull but user not created",
       });
     }
-  } catch (e) {
-    console.log(e);
-
+  } catch {
     return res.status(500).json({ message: "an error occured" });
   }
 });
 
-router.put("/users/:id", async (req, res) => {
+router.put("/:id", async (req, res) => {
   const payload = req.body;
   const id = req.params.id;
 
@@ -106,7 +111,7 @@ router.put("/users/:id", async (req, res) => {
   }
 });
 
-router.delete("/users/:id", async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
     const id = req.params.id;
     const userFound = await pool.query("select * from users where id=?", [id]);
@@ -124,9 +129,7 @@ router.delete("/users/:id", async (req, res) => {
         .status(200)
         .json({ message: "request success, user not deleted" });
     }
-  } catch (e) {
-    console.log(e);
-
+  } catch {
     return res
       .status(500)
       .json({ message: "an internal sever error occured. please try again" });
